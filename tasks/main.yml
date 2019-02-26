@@ -23,12 +23,12 @@
 
 - name: Install the nginx packages
   yum: name={{ item }} state=present
-  with_items: "{{redhat_pkg}}"
+  with_items: "{{ redhat_pkg }}"
   when: ansible_os_family == "RedHat"
 
 - name: Install the nginx packages
   apt: name={{ item }} state=present update_cache=yes
-  with_items: "{{ubuntu_pkg}}"
+  with_items: "{{ ubuntu_pkg }}"
   environment: '{{ env }}'
   when: ansible_os_family == "Debian"
 
@@ -58,18 +58,18 @@
    - restart nginx
 
 - name: create directory /srv/www/letsencrypt/
-  file: path=/srv/www/letsencrypt/{{item.file_name}} state=directory
+  file: path=/srv/www/letsencrypt/{{ item.file_name }} state=directory
   with_items:
     - "{{ nginx_sites }}"
 
 - name: Delete the links to delete site configurations for letsencrypt
   file: path=/etc/nginx/sites-enabled/{{ item.file_name }} state=absent src=/etc/nginx/sites-available/{{ item.file_name }}
-  with_items: "{{nginx_sites}}"
+  with_items: "{{ nginx_sites }}"
 
 - name: Create the configurations for sites
   template: src=site_letsencrypt.j2 dest=/etc/nginx/sites-available/{{ item.file_name }}
   with_items:
-    - "{{nginx_sites}}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
@@ -78,7 +78,7 @@
 - name: Create the links to enable site configurations for letsencrypt
   file: path=/etc/nginx/sites-enabled/{{ item.file_name }} state=link src=/etc/nginx/sites-available/{{ item.file_name }}
   with_items:
-    - "{{nginx_sites}}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
@@ -87,25 +87,32 @@
 - name: reload nginx
   service: name=nginx state=reloaded
   with_items:
-    - "{{nginx_sites}}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
     - item.ssl.supplier == "letsencrypt"
 
 - name: configure certbot webroot plugin
-  command: certbot certonly -n --expand --webroot -w "/srv/www/letsencrypt/{{item.file_name}}" -d "{{item.ssl.domains|join(',')}}" --cert-name "{{ item.file_name }}"
+  command: >
+    certbot certonly -n --expand --webroot
+    -w "/srv/www/letsencrypt/{{ item.file_name }}"
+    -d "{{ item.ssl.domains|join(',') }}"
+    --cert-name "{{ item.file_name }}"
   with_items:
-    - "{{nginx_sites}}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
     - item.ssl.supplier == "letsencrypt"
 
 - name: Copy SSL keys
-  copy: src={{ item.ssl.local_keystore_dir }}/{{item.ssl.key }} dest={{ nginx_ssl_dir }}/{{ item.ssl.key }}  owner={{ nginx_uid }} group={{ nginx_gid }} mode=400 backup=no
+  copy: >
+    src={{ item.ssl.local_keystore_dir }}/{{ item.ssl.key }}
+    dest={{ nginx_ssl_dir }}/{{ item.ssl.key }}
+    owner={{ nginx_uid }} group={{ nginx_gid }} mode=400 backup=no
   with_items:
-    - "{{nginx_sites }}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
@@ -114,9 +121,12 @@
     - item.ssl.supplier == "local"
 
 - name: Copy SSL certificates
-  copy: src={{ item.ssl.local_keystore_dir }}/{{item.ssl.certificate }} dest={{ nginx_ssl_dir }}/{{ item.ssl.certificate }}  owner={{ nginx_uid }} group={{ nginx_gid }} mode=644 backup=no
+  copy: >
+    src={{ item.ssl.local_keystore_dir }}/{{ item.ssl.certificate }}
+    dest={{ nginx_ssl_dir }}/{{ item.ssl.certificate }}
+    owner={{ nginx_uid }} group={{ nginx_gid }} mode=644 backup=no
   with_items:
-    - "{{nginx_sites }}"
+    - "{{ nginx_sites }}"
   when:
     - item.ssl is defined
     - item.ssl != None
@@ -135,12 +145,12 @@
 
 - name: Create the configurations for sites
   template: src=site.j2 dest=/etc/nginx/sites-available/{{ item.file_name }}
-  with_items: "{{nginx_sites}}"
+  with_items: "{{ nginx_sites }}"
 
 
 - name: Create the links to enable site configurations
   file: path=/etc/nginx/sites-enabled/{{ item.file_name }} state=link src=/etc/nginx/sites-available/{{ item.file_name }}
-  with_items: "{{nginx_sites}}"
+  with_items: "{{ nginx_sites }}"
   notify:
    - reload nginx
 
