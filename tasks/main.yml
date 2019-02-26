@@ -33,7 +33,10 @@
   when: ansible_os_family == "Debian"
 
 - name: Install the certbot packages
-  apt: name=certbot state=present update_cache=yes default_release=jessie-backports
+  vars:
+    # TODO check if 'jessie-backports' is really required for Debian systems
+    certbot_release: "{{ 'jessie-backports' if ansible_distribution == 'Debian' else None }}"
+  apt: name=certbot state=present update_cache=yes default_release={{ certbot_release }}
   environment: '{{ env }}'
   when: ansible_os_family == "Debian"
 
