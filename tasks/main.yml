@@ -22,13 +22,11 @@
   when: ansible_os_family == "RedHat"
 
 - name: Install the nginx packages
-  yum: name={{ item }} state=present
-  with_items: "{{ redhat_pkg }}"
+  yum: name={{ redhat_pkg }} state=present
   when: ansible_os_family == "RedHat"
 
 - name: Install the nginx packages
-  apt: name={{ item }} state=present update_cache=yes
-  with_items: "{{ ubuntu_pkg }}"
+  apt: name={{ ubuntu_pkg }} state=present update_cache=yes
   environment: '{{ env }}'
   when: ansible_os_family == "Debian"
 
